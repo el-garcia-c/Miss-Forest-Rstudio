@@ -1,0 +1,253 @@
+---
+title: "Library missForest"
+output:
+  beamer_presentation:
+    colortheme: seahorse
+    fig_height: 100
+    fig_width: 100
+    fonttheme: professionalfonts
+    highlight: pygments
+    theme: Madrid
+fontsize: 8pt
+
+author:
+ - Eunice García Chambi
+
+---
+
+
+## missForest
+### Concepto
+
+El paquete missForest (Non parametric Missing Value imputation using Random Forest) **permite imputar valores perdidos para el caso de datos de tipo mixto**, es decir imputa datos continuos y/o categóricos a través de interacciones complejas y relaciones no lineales.
+
+## Datos de aplicación del paquete missForest
+
+En la aplicación de las funciones del paquete missForest, utilizaremos el conjunto de datos iris. Las variables o atributos que se miden de de cada
+flor son del siguiente tipo:
+
+1. El tipo de flor como variable categórica.
+2. El largo y el ancho del pétalo en cm. como variables numéricas.
+3. El largo y el ancho del sépalo en cm. como variables numéricas.
+
+A continuación se ofrece una pequeña visualización de las primeras cinco observaciones del conjunto de datos:
+
+```{r}
+head(iris, n=5)
+```
+
+
+## Funciones
+
+1. **varClass**
+Devuelve los tipos de variables de un marco de datos. Se usa internamente en varias funciones del paquete 'missForest'.
+```{r}
+library(missForest)
+varClass(iris)
+
+```
+         
+##
+
+2. **prodNA**
+
+Introduce artificialmente valores perdidos. Las entradas en el marco de datos dado se eliminan completamente al azar hasta la cantidad especificada.
+```{r}
+library(missForest)
+prodNA(iris, noNA = 0.2)
+
+```
+         
+##
+
+3. **mixError**
+
+se usa para calcular el error de imputación, particularmente en el caso de datos de tipo mixto. Dada la matriz de datos completa y la matriz de datos que contiene los valores faltantes, se calcula el error cuadrático medio normalizado raíz para el continuo y la proporción de entradas clasificadas falsamente para las variables categóricas.
+
+         mixError(ximp, xmis, xtrue)
+         
+  Argumentos
+ 
+- **ximp: **
+matriz de datos imputada con variables en las columnas y observaciones en las filas. Tenga en cuenta que no debe faltar ningún valor.
+
+- **xmis: **
+matriz de datos con valores faltantes.
+
+- **xtrue: **
+Matriz de datos completa. Tenga en cuenta que no debe faltar ningún valor.
+
+
+##
+
+4. **missForest**
+
+Argumentos
+
+- **xmis**: una matriz de datos con valores faltantes.
+
+- **maxiter**: el número máximo de iteracciones a realizar.
+
+- **variablewise**: lógico. Si es “TRUE ” se devuelve el error OOB para cada variable por separado. Esto puede ser útil como control de fiabilidad para las variables imputadas para un subsiguiente análisis de datos.
+
+- **decreasing**: lógico. Si es “FALSE ”entonces las variables son creadas en orden creciente de entradas perdidas.
+
+- **verbose**: lógico. Si es “TRUE ”el usuario recibe una salida adicional entre iteracciones, con el error de imputación estimado a través del tiempo de ejecución y si se suministra la matriz completa de datos se recibe el verdadero error de imputación.
+
+##
+
+-**Iris data**:Este conjunto de datos completo contiene cinco variables, una de las cuales es categórica con tres
+niveles. Está contenido en la base R y se puede cargar directamente escribiendo data(iris).
+Los datos fueron recopilados por Anderson [1935].
+
+##
+
+Ejemplos:
+
+```{r}
+ data(iris)
+ iris.mis <- prodNA(iris, noNA = 0.1)
+ summary(iris.mis)
+```
+##
+
+```{r}
+iris.imp <- missForest(iris.mis)
+```
+##
+-Podemos recurrir a la matriz de datos imputados escribiendo
+iris.imp$ximp.
+
+-**Nota**: Un error común es usar iris.imp en lugar de iris.imp$ximp para
+análisis posteriores
+
+-Además, missForest proporciona una estimación de error de imputación OOB que se puede extraer utilizando la misma notación $ que con la matriz de datos imputada:
+
+```{r}
+ iris.imp$OOBerror
+```
+##
+```{r}
+iris.imp <- missForest(iris.mis, variablewise = TRUE)
+```
+```{r}
+ iris.imp$OOBerror
+```
+
+##
+```{r}
+ set.seed(81)
+ iris.imp <- missForest(iris.mis, verbose = TRUE)
+```
+##
+
+```{r}
+iris.imp$OOBerror
+```
+
+##
+
+- **ntree**: El efecto de reducir ntree en el tiempo de cálculo es lineal, por ejemplo, reducir a la mitad ntree será la mitad
+Tiempo de cálculo para una sola iteración. El valor predeterminado en missForest se establece en 100, que es
+realmente largo.
+
+##
+
+-**Ejemplo**
+
+```{r}
+iris.mis <- prodNA(iris, 0.05)
+iris.imp <- missForest(iris.mis, verbose = TRUE, maxiter = 3)
+```
+ 
+
+##
+```{r}
+iris.imp <- missForest(iris.mis, verbose = TRUE, maxiter = 3, ntree = 20)
+```
+
+
+##
+
+- **replace**: lógico. Si es “TRUE ”se utiliza muestreo bootstrap (con reemplazos).
+
+- **classwt**: lista de probabilidades a priori de las clases en las variables categóricas. Esto es equivalente al argumento randomForest, sin embargo en este caso el usuario tiene que establecerla para todas las variables en el conjunto de datos (para las variables continuas se establece “NULL ”).
+
+- **cutoff** : lista de puntos de corte de clase para cada variable categórica. Igual que con el argumento classwt
+para las variables continuas se establece en “1 ”.
+
+- **strata**: lista de variables (factor) utilizadas para el muestreo estratificado. Igual que con el argumento classwt para las variables continuas se establece en “NULL ”.
+
+- **sampsize**: lista de tamaño(s) de muestra. Esto es equivalente al argumento randomForest, sin embargo, en este caso el usuario tiene que establecer los tamaños para todas las variables.
+
+##
+
+- **nodesize**: tamaño mínimo de los nodos terminales. Tiene que ser un vector de longitud 2, donde el primero representa la entrada del número de las variables continuas y el segundo el número de las variables categóricas. El valor predeterminado es 1 para continuas y 5 para variables categóricas.
+
+- **maxnodes**: número máximo de nodos terminales.
+
+- **xtrue**: opcional a través de la matriz completa de datos. Esto se puede aplicar para probar el rendimiento. Al proporcionar la matriz de datos completa el argumento verbose mostrará la verdadera imputación después
+de cada iteración y la salida también contendrá el error de imputación.
+
+##
+
+-**Ejemplo**
+
+```{r}
+iris.imp <- missForest(iris.mis, xtrue = iris, verbose = TRUE)
+```
+
+##
+
+- **parallelize**: indica si la función missForest() debe ejecutarse en paralelo. El valor predeterminado es “no ”. Si se utiliza “variables ” los datos son divididos en trazos de tamaño igual al número de núcleos registrados en el paralelo backend (backend hace referencia al conjunto de aplicaciones que gestionan el proceso y almacenamiento de los datos en la aplicación de la función missForest()) . Si se utiliza “forests ”el número total de árboles aleatorios se divide de la misma manera.
+
+
+
+
+##
+
+```{r}
+library(missForest)
+missForest(xmis=iris, maxiter = 10, ntree = 100, variablewise = FALSE,
+           decreasing = FALSE, verbose = FALSE,
+           mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
+           classwt = NULL, cutoff = NULL, strata = NULL,
+           sampsize = NULL, nodesize = NULL, maxnodes = NULL,
+           xtrue = NA, parallelize = c('no', 'variables', 'forests'))
+
+```
+
+
+##
+
+```{r}
+library(missForest)
+## Nonparametric missing value imputation on mixed-type data:
+data(iris)
+summary(iris)
+
+## The data contains four continuous and one categorical variable.
+
+## Artificially produce missing values using the 'prodNA' function:
+set.seed(81)
+iris.mis <- prodNA(iris, noNA = 0.2)
+summary(iris.mis)
+
+## Impute missing values providing the complete matrix for
+## illustration. Use 'verbose' to see what happens between iterations:
+iris.imp <- missForest(iris.mis, xtrue = iris, verbose = TRUE)
+
+## The imputation is finished after five iterations having a final
+## true NRMSE of 0.143 and a PFC of 0.036. The estimated final NRMSE
+## is 0.157 and the PFC is 0.025 (see Details for the reason taking
+## iteration 4 instead of iteration 5 as final value).
+
+## The final results can be accessed directly. The estimated error:
+iris.imp$OOBerror
+
+## The true imputation error (if available):
+iris.imp$error
+
+
+
+```
